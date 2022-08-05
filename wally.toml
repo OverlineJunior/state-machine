@@ -1,0 +1,13 @@
+[package]
+name = "overlinejunior/state-machine"
+version = "0.3.1"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+licence = "MIT"
+author = "Over"
+exclude = ["selene.toml", "roblox.toml"]
+
+
+[dependencies]
+Option = "sleitnick/option@1.0.4"
+Result = "overlinejunior/result@0.1.3"
