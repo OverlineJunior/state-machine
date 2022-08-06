@@ -90,6 +90,19 @@ function StateMachine:transition(eventName: string)
 end
 
 
+--[=[
+    @method lock
+    @param eventName string
+    @return StateMachine
+    @within StateMachine
+
+    Returns a new StateMachine where the event can no longer be triggered.
+
+    :::note
+    Locking and unlocking is layer-based, which means that locking twice results in 2 layers, thus, to actually
+    unlock the event, you now have to unlock it 2 times.
+    :::
+]=]
 function StateMachine:lock(eventName: string)
     local newLockLayers = table.clone(self._LockLayers)
     newLockLayers[eventName] += 1
@@ -98,6 +111,14 @@ function StateMachine:lock(eventName: string)
 end
 
 
+--[=[
+    @method unlock
+    @param eventName string
+    @return StateMachine
+    @within StateMachine
+
+    Returns a new StateMachine where the event can be triggered, but only if no lock layer remains.
+]=]
 function StateMachine:unlock(eventName: string)
     if self._LockLayers[eventName] == 0 then return end
 
@@ -108,25 +129,57 @@ function StateMachine:unlock(eventName: string)
 end
 
 
+--[=[
+    @method IsLocked
+    @param eventName string
+    @return boolean
+    @within StateMachine
+
+    Returns true if there are 1 or more layers of lock for the event.
+]=]
+function StateMachine:IsLocked(eventName: string): boolean
+    return self._LockLayers[eventName] ~= 0
+end
+
+
+--[=[
+    @method State
+    @return string
+    @within StateMachine
+
+    Returns the state of the machine.
+]=]
 function StateMachine:State(): string
     return self._State
 end
 
 
+--[=[
+    @method Trigger
+    @return Option<string>
+    @within StateMachine
+
+    Returns the last triggered event wrapped in an option or option.None if no event has been triggerd yet.
+
+    Option's API: https://sleitnick.github.io/RbxUtil/api/Option/
+]=]
 function StateMachine:Trigger()
     return Option.Wrap(self._Trigger)
 end
 
 
+--[=[
+    @method Can
+    @param eventName string
+    @return boolean
+    @within StateMachine
+
+    Returns true if the event can be triggered based on the machine's current state.
+]=]
 function StateMachine:Can(eventName: string): boolean
     local event: Event = self._FlowMap[eventName]
 
     return event[self._State] ~= nil
-end
-
-
-function StateMachine:IsLocked(eventName: string): boolean
-    return self._LockLayers[eventName] ~= 0
 end
 
 
