@@ -4,7 +4,8 @@
 
 An immutable class for handling the state of things, where the design is a copy of Rust's sm crate, but with a few additions and changes.
 
-API: https://overlinejunior.github.io/state-machine/
+API: https://overlinejunior.github.io/state-machine
+Wally: https://wally.run/package/overlinejunior/state-machine
 
 ```lua
 local Lock = StateMachine {
