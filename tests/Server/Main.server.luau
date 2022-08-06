@@ -14,5 +14,5 @@ local Lock = StateMachine {
     },
 }
 
-local lock = Lock('Broken')
+local lock = Lock('Locked')
 lock = lock:transition('TurnKey')

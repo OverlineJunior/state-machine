@@ -14,12 +14,6 @@
                 "$path": "tests/Shared",
                 "StateMachine": {
                     "$path": "src"
-                },
-                "Option": {
-                    "$path": "Packages/_Index/sleitnick_option@1.0.4/option"
-                },
-                "Result": {
-                    "$path": "Packages/_Index/overlinejunior_result@0.1.3/result"
                 }
             }
         }
