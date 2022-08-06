@@ -2,9 +2,7 @@ local ReplicatedStorage = game:GetService('ReplicatedStorage')
 
 local StateMachine = require(ReplicatedStorage.Shared.StateMachine)
 
-local lock = StateMachine.new {
-    InitialState = 'Locked',
-
+local Lock = StateMachine {
     TurnKey = {
         Locked = 'Unlocked',
         Unlocked = 'Locked',
@@ -16,13 +14,5 @@ local lock = StateMachine.new {
     },
 }
 
-lock:Transition('Break')
-
-lock:TryTransition('TurnKey'):Match {
-    Some = function(trigger)
-        print(trigger)
-    end,
-    None = function()
-        print('None')
-    end,
-}
+local lock = Lock('Broken')
+lock = lock:transition('TurnKey')

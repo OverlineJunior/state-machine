@@ -17,7 +17,7 @@
         }
     }
 
-    local lock = Lock('Locked')
+    local lock = Lock.new('Locked')
     lock = lock:transition('TurnKey')
     lock = lock:transition('Break')
     lock = lock:transition('TurnKey') -- Error!
@@ -25,11 +25,9 @@
     print(lock:State())
 ```
 
-New
+If returning a constructor removes the autocompleting.
 ```lua
-    local lock = StateMachine.new {
-        InitialState = 'Locked',
-
+    local lock = StateMachine.new({
         TurnKey = {
             Locked = function()
                 if ok then
@@ -43,15 +41,7 @@ New
             Locked = 'Broken',
             Unlocked = 'Broken',
         }
-    }
+    }, 'Locked')
 
-    lock:Lock('TurnKey')
-    lock:Unlock('TurnKey')
-    lock:IsLocked('TurnKey')
-
-    lock:Transition('TurnKey')
-    lock:Transition('Break')
-    lock:Transition('TurnKey') -- Error!
-
-    print(lock:State())
+    lock = lock:transition('TurnKey')
 ```

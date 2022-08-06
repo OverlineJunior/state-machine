@@ -1,122 +1,78 @@
-local Option = require(script.Parent.Option)
-local Result = require(script.Parent.Result)
-
 type Event = {[string]: string | () -> string?}
-type FlowMap = {
-    InitialState: string,
-    [string]: Event,
-}
+type FlowMap = {[string]: Event}
+type LockLayers = {[string]: number}
 
-local EVENT_NOT_FOUND_ERR = 'Event %q not found'
-local INVALID_TRANSITION_ERR = 'The %q event cannot be triggered when on the %q state'
-local EVENT_LOCKED_ERR = 'The %q event is locked'
-local FN_FAIL_ERR = 'The %s.%s function failed'
-local FN_INVALID_RETURN_TYPE_ERR = 'Expected the %s.%s function to return string or nil, got %s'
+
+local function FreshLockLayers(flowMap: FlowMap): LockLayers
+    local lockLayers = {}
+
+    for eventName in flowMap do
+        lockLayers[eventName] = 0
+    end
+
+    return lockLayers
+end
+
 
 local StateMachine = {}
 StateMachine.__index = StateMachine
 
 
-function StateMachine.new(flowMap: FlowMap)
+function StateMachine.new(flowMap: FlowMap, initialState: string, _lockLayers: LockLayers?)
     local self = setmetatable({}, StateMachine)
     self._FlowMap = flowMap
-    self._State = flowMap.InitialState
-    self._Trigger = nil
+    self._State = initialState
+    self._LockLayers = _lockLayers or FreshLockLayers(flowMap)
 
-    self._LockLayers = {}
-    for k in flowMap do
-        if k == 'InitialState' then continue end
-
-        self._LockLayers[k] = 0
-    end
-
-    return self
+    return table.freeze(self)
 end
 
 
-function StateMachine:Transition(eventName: string)
-    local event = assert(self._FlowMap[eventName], EVENT_NOT_FOUND_ERR:format(eventName))
-    local newState = event[self._State]
+function StateMachine:transition(eventName: string)
+    local event: Event = self._FlowMap[eventName]
+    local newState = assert(
+        event[self._State],
+        ('The %q event cannot be triggered when on the %q state'):format(eventName, self._State)
+    )
 
-    if type(newState) == 'function' then
-        newState = newState()
-    end
+    assert(not self:IsLocked(eventName), ('The %q event is locked'):format(eventName))
 
-    self:Can(eventName):Expect()
-
-    self._State = newState
-    self._Trigger = eventName
+    return StateMachine.new(self._FlowMap, newState)
 end
 
 
-function StateMachine:TryTransition(...: string)
-    for _, eventName in {...} do
-        if self:Can(eventName):IsOk() then
-            self:Transition(eventName)
-            return Option.Some(eventName)
-        end
-    end
+function StateMachine:lock(eventName: string)
+    local newLockLayers = table.clone(self._LockLayers)
+    newLockLayers[eventName] += 1
 
-    return Option.None
+    return StateMachine.new(self._FlowMap, self._State, newLockLayers)
 end
 
 
-function StateMachine:Can(eventName: string)
-    local event = assert(self._FlowMap[eventName], EVENT_NOT_FOUND_ERR:format(eventName))
-    local newState = event[self._State]
-
-    if newState == nil then
-        return Result.Err((INVALID_TRANSITION_ERR):format(eventName, self._State))
-    elseif self:IsLocked(eventName) then
-        return Result.Err((EVENT_LOCKED_ERR):format(eventName))
-    end
-
-    if type(newState) == 'function' then
-        newState = newState()
-
-        if newState == nil then
-            return Result.Err((FN_FAIL_ERR):format(eventName, self._State))
-        elseif type(newState) ~= 'string' then
-            return Result.Err((FN_INVALID_RETURN_TYPE_ERR):format(eventName, self._State, typeof(newState)))
-        end
-    end
-
-
-    return Result.Ok()
-end
-
-
-function StateMachine:State(): string
-    return self._State
-end
-
-
-function StateMachine:Trigger()
-    return Option.Wrap(self._Trigger)
-end
-
-
-function StateMachine:Lock(eventName: string)
-    assert(self._FlowMap[eventName], EVENT_NOT_FOUND_ERR:format(eventName))
-
-    self._LockLayers[eventName] += 1
-end
-
-
-function StateMachine:Unlock(eventName: string)
-    assert(self._FlowMap[eventName], EVENT_NOT_FOUND_ERR:format(eventName))
-
+function StateMachine:unlock(eventName: string)
     if self._LockLayers[eventName] == 0 then return end
 
-    self._LockLayers[eventName] -= 1
+    local newLockLayers = table.clone(self._LockLayers)
+    newLockLayers[eventName] -= 1
+
+    return StateMachine.new(self._FlowMap, self._State, newLockLayers)
 end
 
 
-function StateMachine:IsLocked(eventName: string): (boolean, number)
-    assert(self._FlowMap[eventName], EVENT_NOT_FOUND_ERR:format(eventName))
-
-    return self._LockLayers[eventName] ~= 0, self._LockLayers[eventName]
+function StateMachine:IsLocked(eventName: string): boolean
+    return self._LockLayers[eventName] ~= 0
 end
 
 
-return StateMachine
+function StateMachine:Can(eventName: string): boolean
+    local event: Event = self._FlowMap[eventName]
+
+    return event[self._State] ~= nil
+end
+
+
+return function(flowMap: FlowMap)
+    return function(initialState: string)
+        return StateMachine.new(flowMap, initialState)
+    end
+end
