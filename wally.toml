@@ -5,6 +5,7 @@ registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 licence = "MIT"
 author = "Over"
+description = "An immutable class for handling the state of things."
 exclude = ["selene.toml", "roblox.toml"]
 
 

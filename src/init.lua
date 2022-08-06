@@ -31,6 +31,7 @@ end
     An immutable class for handling the state of things, where the design is a copy of Rust's sm crate, but with a few additions and changes.
 
     ```lua
+    -- Returns a function that constructs an object of the StateMachine class based on the control flow map provided.
     local Lock = StateMachine {
         TurnKey = {
             Locked = 'Unlocked',
@@ -43,7 +44,7 @@ end
         },
     }
 
-    -- Calling the Lock state machine template constructs the actual state machine explained here.
+    -- Starts the machine on the "Locked" state.
     local lock = Lock('Locked')
     lock = lock:transition('TurnKey')
 
