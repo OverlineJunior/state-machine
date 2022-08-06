@@ -6,7 +6,7 @@ type LockLayers = {[string]: number}
 
 
 local function Assert(eval, genMsg: () -> string, level: number?)
-    if eval then
+    if not eval then
         error(genMsg(), level)
     end
 
