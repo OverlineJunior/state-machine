@@ -5,6 +5,15 @@ type FlowMap = {[string]: Event}
 type LockLayers = {[string]: number}
 
 
+local function Assert(eval, genMsg: () -> string, level: number?)
+    if eval then
+        error(genMsg(), level)
+    end
+
+    return eval
+end
+
+
 local function FreshLockLayers(flowMap: FlowMap): LockLayers
     local lockLayers = {}
 
@@ -19,7 +28,7 @@ end
 --[=[
     @class StateMachine
 
-    An immutable class for handling the state of things. Basically a copy of Rust's sm crate, but with a few additions.
+    An immutable class for handling the state of things, where the design is a copy of Rust's sm crate, but with a few additions and changes.
 
     ```lua
     local Lock = StateMachine {
@@ -34,8 +43,12 @@ end
         },
     }
 
+    -- Calling the Lock state machine template constructs the actual state machine explained here.
     local lock = Lock('Locked')
     lock = lock:transition('TurnKey')
+
+    assert(lock:State(), 'Unlocked')
+    assert(lock:Trigger():Unwrap(), 'TurnKey')
     ```
 ]=]
 local StateMachine = {}
@@ -52,17 +65,28 @@ function StateMachine.new(flowMap: FlowMap, initialState: string, _trigger: stri
     return table.freeze(self)
 end
 
+--[=[
+    @method transition
+    @param eventName string
+    @return StateMachine
+    @within StateMachine
 
+    Returns a new StateMachine with the post-transition state.
+]=]
 function StateMachine:transition(eventName: string)
     local event: Event = self._FlowMap[eventName]
-    local newState = assert(
-        event[self._State],
-        ('The %q event cannot be triggered when on the %q state'):format(eventName, self._State)
-    )
+    local newState = Assert(event[self._State], function()
+        return ('The %q event cannot be triggered when on the %q state'):format(eventName, self._State)
+    end, 3)
 
-    assert(not self:IsLocked(eventName), ('The %q event is locked'):format(eventName))
+    Assert(not self:IsLocked(eventName), function()
+        return ('The %q event is locked'):format(eventName)
+    end, 3)
 
-    return StateMachine.new(self._FlowMap, newState, eventName, self._LockLayers)
+    return if newState == self._State then
+        self
+    else
+        StateMachine.new(self._FlowMap, newState, eventName, self._LockLayers)
 end
 
 
