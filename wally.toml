@@ -1,6 +1,6 @@
 [package]
 name = "overlinejunior/state-machine"
-version = "2.4.3"
+version = "2.4.4"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 licence = "MIT"

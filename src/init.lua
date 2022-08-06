@@ -179,7 +179,7 @@ end
 function StateMachine:Can(eventName: string): boolean
     local event: Event = self._FlowMap[eventName]
 
-    return event[self._State] ~= nil
+    return event[self._State] ~= nil and not self:IsLocked(eventName)
 end
 
 
