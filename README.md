@@ -1,3 +1,7 @@
+<h2><center>🤖 StateMachine</center></h2>
+
+---
+
 An immutable class for handling the state of things, where the design is a copy of Rust's sm crate, but with a few additions and changes.
 
 ```lua
